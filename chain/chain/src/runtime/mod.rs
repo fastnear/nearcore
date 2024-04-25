@@ -869,6 +869,7 @@ impl RuntimeAdapter for NightshadeRuntime {
         receipts: &[Receipt],
         transactions: &[SignedTransaction],
     ) -> Result<ApplyChunkResult, Error> {
+        let instant = Instant::now();
         let shard_id = chunk.shard_id;
         let _timer =
             metrics::APPLYING_CHUNKS_TIME.with_label_values(&[&shard_id.to_string()]).start_timer();
@@ -901,7 +902,9 @@ impl RuntimeAdapter for NightshadeRuntime {
             trie = trie.recording_reads();
         }
 
-        match self.process_state_update(
+        let height = block.height;
+
+        let result = match self.process_state_update(
             trie,
             chunk,
             block,
@@ -918,7 +921,16 @@ impl RuntimeAdapter for NightshadeRuntime {
                 },
                 _ => Err(e),
             },
-        }
+        };
+        let elapsed = instant.elapsed();
+        tracing::warn!(
+            target: "runtime",
+            height=height,
+            shard_id=shard_id,
+            elapsed=elapsed.as_seconds_f64(),
+            "processed chunk");
+
+        result
     }
 
     fn query(
