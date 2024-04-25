@@ -923,11 +923,12 @@ impl RuntimeAdapter for NightshadeRuntime {
             },
         };
         let elapsed = instant.elapsed();
+        
         tracing::warn!(
             target: "runtime",
             height=height,
             shard_id=shard_id,
-            elapsed=elapsed.as_seconds_f64(),
+            elapsed_ms=elapsed.whole_milliseconds(),
             "processed chunk");
 
         result
