@@ -1,4 +1,6 @@
 use std::fmt;
+use std::str::FromStr;
+use serde::{Deserialize, Deserializer};
 
 /// This enum holds the information about the columns that we use within the
 /// RocksDB storage.
@@ -17,6 +19,7 @@ use std::fmt;
 /// attribute in front of the variant when you deprecate a column.
 #[derive(
     PartialEq, Copy, Clone, Debug, Hash, Eq, enum_map::Enum, strum::EnumIter, strum::IntoStaticStr,
+strum::EnumString
 )]
 pub enum DBCol {
     /// Column to indicate which version of database this is.
@@ -552,6 +555,19 @@ impl DBCol {
             #[cfg(feature = "new_epoch_sync")]
             DBCol::EpochSyncInfo => &[DBKeyType::EpochId],
         }
+    }
+}
+
+impl serde::Serialize for DBCol {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.into())
+    }
+}
+
+impl<'de> Deserialize<'de> for DBCol {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
+        let s = String::deserialize(deserializer)?;
+        DBCol::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 

@@ -116,6 +116,12 @@ pub struct StoreConfig {
 
     // TODO (#9989): To be phased out in favor of state_snapshot_config
     pub state_snapshot_enabled: bool,
+
+    pub rocksdb_bloom_filter_bits_per_key: f64,
+
+    pub rocksdb_default_col_cache_size: bytesize::ByteSize,
+
+    pub rocksdb_col_cache_size: HashMap<DBCol, bytesize::ByteSize>,
 }
 
 /// Config used to control state snapshot creation. This is used for state sync and resharding.
@@ -193,11 +199,12 @@ impl StoreConfig {
     }
 
     /// Returns cache size for given column.
-    pub const fn col_cache_size(&self, col: DBCol) -> bytesize::ByteSize {
+    pub fn col_cache_size(&self, col: DBCol) -> bytesize::ByteSize {
+        let default = self.rocksdb_default_col_cache_size;
         match col {
             DBCol::State => self.col_state_cache_size,
             DBCol::FlatState => self.col_flat_state_cache_size,
-            _ => bytesize::ByteSize::mib(32),
+            _ => self.rocksdb_col_cache_size.get(&col).cloned().unwrap_or(default),
         }
     }
 }
@@ -317,6 +324,9 @@ impl Default for StoreConfig {
 
             // TODO: To be phased out in favor of state_snapshot_config
             state_snapshot_enabled: false,
+            rocksdb_bloom_filter_bits_per_key: 10.0,
+            rocksdb_default_col_cache_size: bytesize::ByteSize::mib(32),
+            rocksdb_col_cache_size: Default::default(),
         }
     }
 }

@@ -542,7 +542,8 @@ fn rocksdb_block_based_options(store_config: &StoreConfig, db_col: DBCol) -> Blo
     } else {
         block_opts.set_cache_index_and_filter_blocks(false);
     }
-    block_opts.set_bloom_filter(10.0, true);
+    block_opts.set_bloom_filter(store_config.rocksdb_bloom_filter_bits_per_key, true);
+
 
     block_opts
 }
