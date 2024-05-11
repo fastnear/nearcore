@@ -85,10 +85,10 @@ pub struct IndexerConfig {
 
 /// This is the core component, which handles `nearcore` and internal `streamer`.
 pub struct Indexer {
-    indexer_config: IndexerConfig,
-    near_config: nearcore::NearConfig,
-    view_client: actix::Addr<near_client::ViewClientActor>,
-    client: actix::Addr<near_client::ClientActor>,
+    pub indexer_config: IndexerConfig,
+    pub near_config: nearcore::NearConfig,
+    pub view_client: actix::Addr<near_client::ViewClientActor>,
+    pub client: actix::Addr<near_client::ClientActor>,
 }
 
 impl Indexer {

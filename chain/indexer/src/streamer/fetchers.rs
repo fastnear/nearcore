@@ -40,7 +40,7 @@ pub(crate) async fn fetch_latest_block(
 }
 
 /// Fetches specific block by it's height
-pub(crate) async fn fetch_block_by_height(
+pub async fn fetch_block_by_height(
     client: &Addr<near_client::ViewClientActor>,
     height: u64,
 ) -> Result<views::BlockView, FailedToFetchData> {
