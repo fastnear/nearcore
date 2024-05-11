@@ -14,7 +14,7 @@ pub use near_indexer_primitives::{
     StreamerMessage,
 };
 
-mod streamer;
+pub mod streamer;
 
 pub const INDEXER: &str = "indexer";
 
