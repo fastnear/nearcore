@@ -10,6 +10,7 @@ use near_indexer_primitives::IndexerExecutionOutcomeWithOptionalReceipt;
 use near_o11y::WithSpanContextExt;
 use near_primitives::hash::CryptoHash;
 use near_primitives::{types, views};
+use near_primitives::types::Finality;
 
 use super::errors::FailedToFetchData;
 use super::INDEXER;
@@ -27,11 +28,12 @@ pub(crate) async fn fetch_status(
 /// entire block or we already fetched this block.
 pub(crate) async fn fetch_latest_block(
     client: &Addr<near_client::ViewClientActor>,
+    finality: Finality,
 ) -> Result<views::BlockView, FailedToFetchData> {
     client
         .send(
             near_client::GetBlock(near_primitives::types::BlockReference::Finality(
-                near_primitives::types::Finality::Final,
+                finality,
             ))
             .with_span_context(),
         )

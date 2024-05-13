@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+use std::time::Duration;
 use anyhow::Context;
 use tokio::sync::mpsc;
 
@@ -81,6 +82,10 @@ pub struct IndexerConfig {
     pub await_for_node_synced: AwaitForNodeSyncedEnum,
     /// Tells whether to validate the genesis file before starting
     pub validate_genesis: bool,
+    /// Interval for the indexer to check for new blocks. Default is 500ms
+    pub interval: Duration,
+    /// Finality for the latest block
+    pub finality: near_primitives::types::Finality,
 }
 
 /// This is the core component, which handles `nearcore` and internal `streamer`.

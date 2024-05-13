@@ -28,8 +28,6 @@ pub mod fetchers;
 mod metrics;
 mod utils;
 
-const INTERVAL: Duration = Duration::from_millis(500);
-
 /// Blocks #47317863 and #47317864 with restored receipts.
 const PROBLEMATIC_BLOCKS: [CryptoHash; 2] = [
     CryptoHash(
@@ -304,7 +302,7 @@ pub(crate) async fn start(
     let mut last_synced_block_height: Option<near_primitives::types::BlockHeight> = None;
 
     'main: loop {
-        time::sleep(INTERVAL).await;
+        time::sleep(indexer_config.interval).await;
         match indexer_config.await_for_node_synced {
             AwaitForNodeSyncedEnum::WaitForFullSync => {
                 let status = fetch_status(&client).await;
@@ -317,7 +315,7 @@ pub(crate) async fn start(
             AwaitForNodeSyncedEnum::StreamWhileSyncing => {}
         };
 
-        let block = if let Ok(block) = fetch_latest_block(&view_client).await {
+        let block = if let Ok(block) = fetch_latest_block(&view_client, indexer_config.finality.clone()).await {
             block
         } else {
             continue;
