@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+use std::time::Duration;
 use anyhow::Context;
 use tokio::sync::mpsc;
 
@@ -16,7 +17,7 @@ pub use near_indexer_primitives::{
 
 pub use streamer::build_streamer_message;
 
-mod streamer;
+pub mod streamer;
 
 pub const INDEXER: &str = "indexer";
 
@@ -83,14 +84,18 @@ pub struct IndexerConfig {
     pub await_for_node_synced: AwaitForNodeSyncedEnum,
     /// Tells whether to validate the genesis file before starting
     pub validate_genesis: bool,
+    /// Interval for the indexer to check for new blocks. Default is 500ms
+    pub interval: Duration,
+    /// Finality for the latest block
+    pub finality: near_primitives::types::Finality,
 }
 
 /// This is the core component, which handles `nearcore` and internal `streamer`.
 pub struct Indexer {
-    indexer_config: IndexerConfig,
-    near_config: nearcore::NearConfig,
-    view_client: actix::Addr<near_client::ViewClientActor>,
-    client: actix::Addr<near_client::ClientActor>,
+    pub indexer_config: IndexerConfig,
+    pub near_config: nearcore::NearConfig,
+    pub view_client: actix::Addr<near_client::ViewClientActor>,
+    pub client: actix::Addr<near_client::ClientActor>,
 }
 
 impl Indexer {
