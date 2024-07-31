@@ -10,6 +10,7 @@ use near_indexer_primitives::IndexerExecutionOutcomeWithOptionalReceipt;
 use near_o11y::WithSpanContextExt;
 use near_primitives::hash::CryptoHash;
 use near_primitives::{types, views};
+use near_primitives::types::Finality;
 
 use super::errors::FailedToFetchData;
 use super::INDEXER;
@@ -26,14 +27,15 @@ pub(crate) async fn fetch_status(
 
 /// Fetches the status to retrieve `latest_block_height` to determine if we need to fetch
 /// entire block or we already fetched this block.
-pub(crate) async fn fetch_latest_block(
+pub async fn fetch_latest_block(
     client: &Addr<near_client::ViewClientActor>,
+    finality: Finality,
 ) -> Result<views::BlockView, FailedToFetchData> {
     tracing::debug!(target: INDEXER, "Fetching latest block");
     client
         .send(
             near_client::GetBlock(near_primitives::types::BlockReference::Finality(
-                near_primitives::types::Finality::Final,
+                finality,
             ))
             .with_span_context(),
         )
@@ -42,7 +44,7 @@ pub(crate) async fn fetch_latest_block(
 }
 
 /// Fetches specific block by it's height
-pub(crate) async fn fetch_block_by_height(
+pub async fn fetch_block_by_height(
     client: &Addr<near_client::ViewClientActor>,
     height: u64,
 ) -> Result<views::BlockView, FailedToFetchData> {
