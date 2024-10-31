@@ -32,7 +32,7 @@ use crate::validate::{
 use crate::{
     byzantine_assert, create_light_client_block_view, BlockStatus, ChainGenesis, Doomslug,
     Provenance,
-};
+}t c
 use crate::{metrics, DoomslugThresholdMode};
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use itertools::Itertools;
