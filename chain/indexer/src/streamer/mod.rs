@@ -37,8 +37,6 @@ static DELAYED_LOCAL_RECEIPTS_CACHE: std::sync::LazyLock<
     Arc<RwLock<HashMap<CryptoHash, views::ReceiptView>>>,
 > = std::sync::LazyLock::new(|| Arc::new(RwLock::new(HashMap::new())));
 
-const INTERVAL: Duration = Duration::from_millis(250);
-
 /// Blocks #47317863 and #47317864 with restored receipts.
 const PROBLEMATIC_BLOCKS: [CryptoHash; 2] = [
     CryptoHash(
