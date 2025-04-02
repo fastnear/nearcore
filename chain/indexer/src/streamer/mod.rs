@@ -245,7 +245,14 @@ pub async fn build_streamer_message(
                 block.header.height,
                 header.height_included
             );
-            continue;
+            if header.height_included <= block.header.prev_height.unwrap_or(block.header.height) {
+                continue;
+            } else {
+                tracing::warn!(
+                    target: INDEXER,
+                    "Seems the previous block was skipped as well, so we continue with this chunk."
+                );
+            }
         }
 
         // Find the shard index for the chunk by shard_id
