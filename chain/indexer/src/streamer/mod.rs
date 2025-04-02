@@ -238,6 +238,13 @@ pub async fn build_streamer_message(
         // first in a new shard layout during resharding because then the shard
         // id will be no longer valid.
         if !header.is_new_chunk(block.header.height) {
+            tracing::warn!(
+                target: INDEXER,
+                "Chunk {} is not a new chunk, skipping it. Block: {}, was included {}",
+                header.chunk_hash,
+                block.header.height,
+                header.height_included
+            );
             continue;
         }
 
