@@ -29,15 +29,13 @@ use crate::{AwaitForNodeSyncedEnum, IndexerConfig};
 use near_epoch_manager::shard_tracker::ShardTracker;
 
 mod errors;
-mod fetchers;
+pub mod fetchers;
 mod metrics;
 mod utils;
 
 static DELAYED_LOCAL_RECEIPTS_CACHE: std::sync::LazyLock<
     Arc<RwLock<HashMap<CryptoHash, views::ReceiptView>>>,
 > = std::sync::LazyLock::new(|| Arc::new(RwLock::new(HashMap::new())));
-
-const INTERVAL: Duration = Duration::from_millis(250);
 
 /// Blocks #47317863 and #47317864 with restored receipts.
 const PROBLEMATIC_BLOCKS: [CryptoHash; 2] = [
@@ -240,7 +238,21 @@ pub async fn build_streamer_message(
         // first in a new shard layout during resharding because then the shard
         // id will be no longer valid.
         if !header.is_new_chunk(block.header.height) {
-            continue;
+            tracing::warn!(
+                target: INDEXER,
+                "Chunk {} is not a new chunk, skipping it. Block: {}, was included {}",
+                header.chunk_hash,
+                block.header.height,
+                header.height_included
+            );
+            if header.height_included <= block.header.prev_height.unwrap_or(block.header.height) {
+                continue;
+            } else {
+                tracing::warn!(
+                    target: INDEXER,
+                    "Seems the previous block was skipped as well, so we continue with this chunk."
+                );
+            }
         }
 
         // Find the shard index for the chunk by shard_id
@@ -413,7 +425,7 @@ pub(crate) async fn start(
     let mut last_synced_block_height: Option<near_primitives::types::BlockHeight> = None;
 
     'main: loop {
-        time::sleep(INTERVAL).await;
+        time::sleep(indexer_config.interval).await;
         match indexer_config.await_for_node_synced {
             AwaitForNodeSyncedEnum::WaitForFullSync => {
                 let status = fetch_status(&client).await;
