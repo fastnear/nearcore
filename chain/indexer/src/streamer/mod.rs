@@ -238,21 +238,7 @@ pub async fn build_streamer_message(
         // first in a new shard layout during resharding because then the shard
         // id will be no longer valid.
         if !header.is_new_chunk(block.header.height) {
-            tracing::warn!(
-                target: INDEXER,
-                "Chunk {} is not a new chunk, skipping it. Block: {}, was included {}",
-                header.chunk_hash,
-                block.header.height,
-                header.height_included
-            );
-            if header.height_included <= block.header.prev_height.unwrap_or(block.header.height) {
-                continue;
-            } else {
-                tracing::warn!(
-                    target: INDEXER,
-                    "Seems the previous block was skipped as well, so we continue with this chunk."
-                );
-            }
+            continue;
         }
 
         // Find the shard index for the chunk by shard_id
