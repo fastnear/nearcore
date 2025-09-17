@@ -1,5 +1,6 @@
 #![doc = include_str!("../README.md")]
 
+use std::time::Duration;
 use anyhow::Context;
 use near_config_utils::DownloadConfigType;
 use tokio::sync::mpsc;
@@ -18,7 +19,7 @@ pub use near_indexer_primitives::{
 use near_epoch_manager::shard_tracker::ShardTracker;
 pub use streamer::build_streamer_message;
 
-mod streamer;
+pub mod streamer;
 
 pub const INDEXER: &str = "indexer";
 
@@ -87,16 +88,18 @@ pub struct IndexerConfig {
     pub finality: Finality,
     /// Tells whether to validate the genesis file before starting
     pub validate_genesis: bool,
+    /// Interval for the indexer to check for new blocks. Default is 500ms
+    pub interval: Duration,
 }
 
 /// This is the core component, which handles `nearcore` and internal `streamer`.
 pub struct Indexer {
-    indexer_config: IndexerConfig,
-    near_config: nearcore::NearConfig,
-    view_client: actix::Addr<near_client::ViewClientActor>,
-    client: actix::Addr<near_client::ClientActor>,
-    rpc_handler: actix::Addr<near_client::RpcHandlerActor>,
-    shard_tracker: ShardTracker,
+    pub indexer_config: IndexerConfig,
+    pub near_config: nearcore::NearConfig,
+    pub view_client: actix::Addr<near_client::ViewClientActor>,
+    pub client: actix::Addr<near_client::ClientActor>,
+    pub rpc_handler: actix::Addr<near_client::RpcHandlerActor>,
+    pub shard_tracker: ShardTracker,
 }
 
 impl Indexer {
