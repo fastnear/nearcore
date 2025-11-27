@@ -56,10 +56,7 @@ pub struct IndexerClientFetcher {
 }
 
 impl IndexerViewClientFetcher {
-    pub(crate) async fn fetch_block(
-        &self,
-        hash: CryptoHash,
-    ) -> Result<BlockView, FailedToFetchData> {
+    pub async fn fetch_block(&self, hash: CryptoHash) -> Result<BlockView, FailedToFetchData> {
         tracing::debug!(target: INDEXER, ?hash, "fetch block by hash");
         self.sender
             .send_async(GetBlock(BlockId::Hash(hash).into()))
@@ -67,7 +64,7 @@ impl IndexerViewClientFetcher {
             .map_err(|err| FailedToFetchData::String(err.to_string()))
     }
 
-    pub(crate) async fn fetch_latest_block(
+    pub async fn fetch_latest_block(
         &self,
         finality: Finality,
     ) -> Result<BlockView, FailedToFetchData> {
@@ -78,7 +75,7 @@ impl IndexerViewClientFetcher {
             .map_err(|err| FailedToFetchData::String(err.to_string()))
     }
 
-    pub(crate) async fn fetch_block_by_height(
+    pub async fn fetch_block_by_height(
         &self,
         height: u64,
     ) -> Result<Option<BlockView>, FailedToFetchData> {
