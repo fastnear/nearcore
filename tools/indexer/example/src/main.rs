@@ -276,6 +276,7 @@ async fn main() -> Result<()> {
                 await_for_node_synced: near_indexer::AwaitForNodeSyncedEnum::WaitForFullSync,
                 finality: near_primitives::types::Finality::Final,
                 validate_genesis: true,
+                interval: std::time::Duration::from_millis(250),
             };
             let tokio_runtime = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
