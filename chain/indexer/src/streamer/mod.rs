@@ -1,7 +1,7 @@
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
-use near_async::time::{Clock, Duration};
+use near_async::time::Clock;
 use near_primitives::types::Balance;
 use near_primitives::version::ProtocolFeature;
 use parking_lot::RwLock;
@@ -27,15 +27,13 @@ use near_epoch_manager::shard_tracker::ShardTracker;
 pub use fetchers::{IndexerClientFetcher, IndexerViewClientFetcher};
 
 mod errors;
-mod fetchers;
+pub mod fetchers;
 mod metrics;
 mod utils;
 
 static DELAYED_LOCAL_RECEIPTS_CACHE: std::sync::LazyLock<
     Arc<RwLock<HashMap<CryptoHash, ReceiptView>>>,
 > = std::sync::LazyLock::new(|| Arc::new(RwLock::new(HashMap::new())));
-
-const INTERVAL: Duration = Duration::milliseconds(250);
 
 /// This function supposed to return the entire `StreamerMessage`.
 /// It fetches the block and all related parts (chunks, outcomes, state changes etc.)
@@ -334,9 +332,12 @@ pub async fn start(
     };
 
     let mut last_synced_block_height: Option<near_primitives::types::BlockHeight> = None;
+    let interval = near_async::time::Duration::nanoseconds(
+        i64::try_from(indexer_config.interval.as_nanos()).expect("indexer interval is too large"),
+    );
 
     'main: loop {
-        clock.sleep(INTERVAL).await;
+        clock.sleep(interval).await;
         match indexer_config.await_for_node_synced {
             AwaitForNodeSyncedEnum::WaitForFullSync => {
                 let status = client.fetch_status().await;
