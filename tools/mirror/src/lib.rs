@@ -1868,6 +1868,7 @@ impl<T: ChainAccess> TxMirror<T> {
             await_for_node_synced: near_indexer::AwaitForNodeSyncedEnum::StreamWhileSyncing,
             finality: Finality::Final,
             validate_genesis: false,
+            interval: Duration::from_millis(250),
         };
         let near_config =
             indexer_config.load_near_config().context("failed to load near config").unwrap();
