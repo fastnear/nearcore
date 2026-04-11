@@ -7,7 +7,6 @@ use crate::receipt_manager::ReceiptManager;
 use itertools::Itertools;
 use near_crypto::{KeyType, PublicKey};
 use near_parameters::{RuntimeConfig, RuntimeConfigStore};
-use near_primitives::version::PROTOCOL_VERSION;
 use near_primitives::account::{AccessKey, Account};
 use near_primitives::action::GlobalContractIdentifier;
 use near_primitives::apply::ApplyChunkReason;
@@ -23,6 +22,7 @@ use near_primitives::trie_key::trie_key_parsers::{
 use near_primitives::types::{
     AccountId, Balance, BlockHeight, EpochHeight, EpochId, EpochInfoProvider, Gas, Nonce, ShardId,
 };
+use near_primitives::version::PROTOCOL_VERSION;
 use near_primitives::views::{StateItem, ViewStateResult};
 use near_primitives_core::config::ViewConfig;
 use near_store::trie::AccessOptions;
@@ -416,25 +416,19 @@ impl TrieViewer {
     /// transparently swap `vm_kind` for the one used by the current
     /// `PROTOCOL_VERSION` while keeping all other per-version parameters
     /// (gas costs, limits, feature flags, contract resolution rules) intact.
-    fn runtime_config_for_view(
-        &self,
-        protocol_version: ProtocolVersion,
-    ) -> Arc<RuntimeConfig> {
+    fn runtime_config_for_view(&self, protocol_version: ProtocolVersion) -> Arc<RuntimeConfig> {
         use near_vm_runner::internal::VMKindExt as _;
         let config = self.runtime_config_store.get_config(protocol_version);
         if config.wasm_config.vm_kind.is_available() {
             return Arc::clone(config);
         }
-        let latest_vm_kind = self
-            .runtime_config_store
-            .get_config(PROTOCOL_VERSION)
-            .wasm_config
-            .vm_kind;
+        let latest_vm_kind =
+            self.runtime_config_store.get_config(PROTOCOL_VERSION).wasm_config.vm_kind;
         let mut wasm_config = near_parameters::vm::Config::clone(&config.wasm_config);
         tracing::debug!(
             target: "runtime",
             historical_vm_kind = ?wasm_config.vm_kind,
-            %latest_vm_kind,
+            latest_vm_kind = ?latest_vm_kind,
             %protocol_version,
             "view call: historical vm_kind is no longer compiled in, using latest"
         );
