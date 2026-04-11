@@ -6,7 +6,8 @@ use crate::pipelining::ReceiptPreparationPipeline;
 use crate::receipt_manager::ReceiptManager;
 use itertools::Itertools;
 use near_crypto::{KeyType, PublicKey};
-use near_parameters::RuntimeConfigStore;
+use near_parameters::{RuntimeConfig, RuntimeConfigStore};
+use near_primitives::version::PROTOCOL_VERSION;
 use near_primitives::account::{AccessKey, Account};
 use near_primitives::action::GlobalContractIdentifier;
 use near_primitives::apply::ApplyChunkReason;
@@ -283,7 +284,7 @@ impl TrieViewer {
         let public_key = PublicKey::empty(KeyType::ED25519);
         let empty_hash = CryptoHash::default();
         let mut receipt_manager = ReceiptManager::default();
-        let config = self.runtime_config_store.get_config(view_state.current_protocol_version);
+        let config = self.runtime_config_for_view(view_state.current_protocol_version);
         let apply_state = ApplyState {
             apply_reason: ApplyChunkReason::ViewTrackedShard,
             block_height: view_state.block_height,
@@ -297,7 +298,7 @@ impl TrieViewer {
             gas_limit: None,
             random_seed: root,
             current_protocol_version: view_state.current_protocol_version,
-            config: Arc::clone(config),
+            config: Arc::clone(&config),
             cache: view_state.cache,
             is_new_chunk: false,
             congestion_info: Default::default(),
@@ -326,7 +327,7 @@ impl TrieViewer {
             receipt: ReceiptEnum::Action(action_receipt.clone()),
         });
         let pipeline = ReceiptPreparationPipeline::new(
-            Arc::clone(config),
+            Arc::clone(&config),
             apply_state.cache.as_ref().map(|v| v.handle()),
             state_update.contract_storage().clone(),
             epoch_info_provider.chain_id(),
@@ -366,7 +367,7 @@ impl TrieViewer {
             [].into(),
             &function_call,
             &empty_hash,
-            config,
+            &config,
             true,
             view_config,
         )
@@ -402,5 +403,44 @@ impl TrieViewer {
                 .limit_config
                 .max_gas_burnt
         })
+    }
+
+    /// Runtime config used to serve a view call against a block at
+    /// `protocol_version`.
+    ///
+    /// Normally this is just the stored config for that protocol version, but
+    /// on archival nodes the historical config may point at a VM backend
+    /// (e.g. `Wasmer0`/`Wasmer2`) that is no longer compiled into the binary.
+    /// Attempting to run such a contract panics inside `near_vm_runner` and
+    /// brings the node down. View calls are not consensus-relevant, so we
+    /// transparently swap `vm_kind` for the one used by the current
+    /// `PROTOCOL_VERSION` while keeping all other per-version parameters
+    /// (gas costs, limits, feature flags, contract resolution rules) intact.
+    fn runtime_config_for_view(
+        &self,
+        protocol_version: ProtocolVersion,
+    ) -> Arc<RuntimeConfig> {
+        use near_vm_runner::internal::VMKindExt as _;
+        let config = self.runtime_config_store.get_config(protocol_version);
+        if config.wasm_config.vm_kind.is_available() {
+            return Arc::clone(config);
+        }
+        let latest_vm_kind = self
+            .runtime_config_store
+            .get_config(PROTOCOL_VERSION)
+            .wasm_config
+            .vm_kind;
+        let mut wasm_config = near_parameters::vm::Config::clone(&config.wasm_config);
+        tracing::debug!(
+            target: "runtime",
+            historical_vm_kind = ?wasm_config.vm_kind,
+            %latest_vm_kind,
+            %protocol_version,
+            "view call: historical vm_kind is no longer compiled in, using latest"
+        );
+        wasm_config.vm_kind = latest_vm_kind;
+        let mut patched = RuntimeConfig::clone(config);
+        patched.wasm_config = Arc::new(wasm_config);
+        Arc::new(patched)
     }
 }
