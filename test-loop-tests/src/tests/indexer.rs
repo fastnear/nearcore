@@ -371,6 +371,7 @@ fn start_indexer(env: &TestLoopEnv, sync_mode: SyncModeEnum) -> mpsc::Receiver<S
         await_for_node_synced: AwaitForNodeSyncedEnum::StreamWhileSyncing,
         finality: Finality::None,
         validate_genesis: false,
+        interval: std::time::Duration::from_millis(250),
     };
 
     let client = &env.test_loop.data.get(&node_data.client_sender.actor_handle()).client;
