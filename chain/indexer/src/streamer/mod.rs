@@ -3,7 +3,7 @@ use self::utils::convert_transactions_sir_into_local_receipts;
 use crate::INDEXER;
 use crate::{AwaitForNodeSyncedEnum, IndexerConfig};
 pub use fetchers::{IndexerClientFetcher, IndexerViewClientFetcher};
-use near_async::time::{Clock, Duration};
+use near_async::time::Clock;
 use near_epoch_manager::shard_tracker::ShardTracker;
 use near_indexer_primitives::{
     IndexerChunkView, IndexerExecutionOutcomeWithOptionalReceipt,
@@ -23,15 +23,13 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 
 mod errors;
-mod fetchers;
+pub mod fetchers;
 mod metrics;
 mod utils;
 
 static DELAYED_LOCAL_RECEIPTS_CACHE: std::sync::LazyLock<
     Arc<RwLock<HashMap<CryptoHash, ReceiptView>>>,
 > = std::sync::LazyLock::new(|| Arc::new(RwLock::new(HashMap::new())));
-
-const INTERVAL: Duration = Duration::milliseconds(250);
 
 /// This function supposed to return the entire `StreamerMessage`.
 /// It fetches the block and all related parts (chunks, outcomes, state changes etc.)
@@ -394,9 +392,12 @@ pub async fn start(
     };
 
     let mut last_synced_block_height: Option<BlockHeight> = None;
+    let interval = near_async::time::Duration::nanoseconds(
+        i64::try_from(indexer_config.interval.as_nanos()).expect("indexer interval is too large"),
+    );
 
     'main: loop {
-        clock.sleep(INTERVAL).await;
+        clock.sleep(interval).await;
         match indexer_config.await_for_node_synced {
             AwaitForNodeSyncedEnum::WaitForFullSync => {
                 let status = client.fetch_status().await;
