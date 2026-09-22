@@ -288,7 +288,7 @@ async fn fetch_instant_receipts(
 }
 
 impl IndexerViewClientFetcher {
-    async fn fetch_block(&self, hash: CryptoHash) -> Result<BlockView, FailedToFetchData> {
+    pub async fn fetch_block(&self, hash: CryptoHash) -> Result<BlockView, FailedToFetchData> {
         tracing::debug!(target: INDEXER, ?hash, "fetch block by hash");
         self.sender
             .send_async(GetBlock(BlockId::Hash(hash).into()))
