@@ -15,11 +15,12 @@ pub use near_primitives;
 use near_primitives::types::{Finality, Gas};
 use nearcore::NearNode;
 pub use nearcore::{NearConfig, get_default_home, init_configs};
+use std::time::Duration;
 use streamer::{IndexerClientFetcher, IndexerViewClientFetcher};
 pub use streamer::{build_streamer_message, start};
 use tokio::sync::mpsc;
 
-mod streamer;
+pub mod streamer;
 
 pub const INDEXER: &str = "indexer";
 
@@ -97,6 +98,8 @@ pub struct IndexerConfig {
     /// (the `mirror` tool), where dropping the occasional block is preferable to
     /// crashing the node.
     pub skip_broken_blocks: bool,
+    /// Interval for the indexer to check for new blocks. Default is 250ms
+    pub interval: Duration,
 }
 
 impl IndexerConfig {
@@ -122,11 +125,11 @@ impl IndexerConfig {
 
 /// This is the core component, which handles `nearcore` and internal `streamer`.
 pub struct Indexer {
-    indexer_config: IndexerConfig,
-    near_config: nearcore::NearConfig,
-    view_client: IndexerViewClientFetcher,
-    client: IndexerClientFetcher,
-    shard_tracker: ShardTracker,
+    pub indexer_config: IndexerConfig,
+    pub near_config: nearcore::NearConfig,
+    pub view_client: IndexerViewClientFetcher,
+    pub client: IndexerClientFetcher,
+    pub shard_tracker: ShardTracker,
 }
 
 impl Indexer {

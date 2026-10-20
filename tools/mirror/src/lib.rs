@@ -2037,6 +2037,7 @@ impl<T: ChainAccess> TxMirror<T> {
             // the occasional block whose data is not available (e.g. a receipt
             // missing right after a forknet is started) is preferable to crashing.
             skip_broken_blocks: true,
+            interval: Duration::from_millis(250),
         };
         let near_config =
             indexer_config.load_near_config().context("failed to load near config").unwrap();
