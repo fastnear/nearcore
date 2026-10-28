@@ -642,6 +642,7 @@ fn start_indexer_with_shard_tracker(
         finality: Finality::None,
         validate_genesis: false,
         skip_broken_blocks,
+        interval: Duration::milliseconds(250).unsigned_abs(),
     };
 
     let store_config =

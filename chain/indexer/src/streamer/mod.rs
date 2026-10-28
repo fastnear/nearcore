@@ -11,10 +11,8 @@ use near_primitives::views::BlockView;
 use rocksdb::DB;
 use tokio::sync::mpsc;
 
-mod fetchers;
+pub mod fetchers;
 mod metrics;
-
-const INTERVAL: Duration = Duration::milliseconds(250);
 
 /// How many consecutive times we retry building a streamer message for the same
 /// height before terminating. In `WaitForFullSync` mode, failures while the node
@@ -75,9 +73,11 @@ pub async fn start(
     // In `WaitForFullSync` mode it is also reset while the node is syncing (see
     // `MAX_BUILD_STREAMER_MESSAGE_ATTEMPTS`).
     let mut build_streamer_message_attempts: u32 = 0;
+    let interval =
+        Duration::try_from(indexer_config.interval).expect("indexer interval is too large");
 
     'main: loop {
-        clock.sleep(INTERVAL).await;
+        clock.sleep(interval).await;
         match indexer_config.await_for_node_synced {
             AwaitForNodeSyncedEnum::WaitForFullSync => {
                 let status = client.fetch_status().await;

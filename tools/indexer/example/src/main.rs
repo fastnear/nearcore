@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use configs::{Opts, SubCommand};
 use near_indexer;
+use std::time::Duration;
 use tokio::sync::mpsc;
 
 mod configs;
@@ -275,6 +276,7 @@ async fn main() -> Result<()> {
                 finality: near_primitives::types::Finality::Final,
                 validate_genesis: true,
                 skip_broken_blocks: false,
+                interval: Duration::from_millis(250),
             };
             let tokio_runtime = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
